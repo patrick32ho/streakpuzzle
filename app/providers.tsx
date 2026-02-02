@@ -6,12 +6,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { farcasterMiniApp } from "@farcaster/miniapp-wagmi-connector";
 import { MiniAppProvider } from "./providers/MiniAppProvider";
 
-// Configure both chains with their transports
+// Configure both chains - Base mainnet first (primary for transactions)
 const config = createConfig({
-  chains: [baseSepolia, base],
+  chains: [base, baseSepolia],
   transports: { 
-    [baseSepolia.id]: http(),
     [base.id]: http(),
+    [baseSepolia.id]: http(),
   },
   connectors: [farcasterMiniApp()],
 });

@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useAccount, useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
+import { useAccount, useSendTransaction, useWaitForTransactionReceipt, useSwitchChain } from 'wagmi';
 import { parseEther } from 'viem';
+import { base } from 'wagmi/chains';
 import { useMiniApp } from './providers/MiniAppProvider';
 import { getDayId, formatDayId } from '@/lib/puzzle';
 
@@ -14,7 +15,8 @@ const TRACKING_ADDRESS = '0x0000000000000000000000000000000000000001';
 export default function Home() {
   const { context } = useMiniApp();
   const router = useRouter();
-  const { isConnected } = useAccount();
+  const { isConnected, chainId } = useAccount();
+  const { switchChain } = useSwitchChain();
   const [dayId, setDayId] = useState(0);
   const [todayStatus, setTodayStatus] = useState<'unplayed' | 'solved' | 'failed'>('unplayed');
   const [streak, setStreak] = useState(0);
@@ -71,13 +73,19 @@ export default function Home() {
       return;
     }
 
-    // If wallet connected, send tracking transaction
+    // If wallet connected, send tracking transaction on Base mainnet
     if (isConnected) {
       setShowTxModal(true);
       try {
+        // Switch to Base mainnet if not already on it
+        if (chainId !== base.id) {
+          await switchChain({ chainId: base.id });
+        }
+        
         sendTransaction({
           to: TRACKING_ADDRESS as `0x${string}`,
           value: parseEther('0'),
+          chainId: base.id, // Force Base mainnet
           // Encode dayId in the data field for tracking
           data: `0x504c4159${dayId.toString(16).padStart(8, '0')}` as `0x${string}`, // "PLAY" + dayId
         });
