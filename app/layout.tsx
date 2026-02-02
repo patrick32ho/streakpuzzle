@@ -59,6 +59,7 @@ export default function RootLayout({
           <meta name="theme-color" content="#0a0a0a" />
           <meta name="apple-mobile-web-app-capable" content="yes" />
           <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+          <meta name="base:app_id" content="697f86e82aafa0bc9ad8a464" />
         </head>
         <body className={`${inter.variable} ${sourceCodePro.variable} antialiased`}>
           <SafeArea>{children}</SafeArea>
