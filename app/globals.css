@@ -1,44 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @layer base {
   :root {
-    --background: #ffffff;
-    --foreground: #171717;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --background: #0a0a0a;
-      --foreground: #ededed;
-    }
+    --background: #0a0a0a;
+    --foreground: #ededed;
+    --primary: #0052FF;
+    --primary-dark: #0039B3;
   }
 
   html,
   body {
     max-width: 100vw;
     overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
     color: var(--foreground);
     background: var(--background);
-    font-family: var(--font-inter), sans-serif;
+    font-family: var(--font-inter), system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
-
-  code {
-    background-color: rgba(0, 0, 0, 0.05);
-    border-radius: 6px;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    font-family: var(--font-source-code-pro), monospace;
-    font-size: 0.875rem;
-    padding: 0.25rem 0.5rem calc(0.25rem + 2px);
-  }
-
-  @media (prefers-color-scheme: dark) {
-    code {
-      background-color: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
   }
 
   * {
@@ -52,9 +36,78 @@
     text-decoration: none;
   }
 
-  @media (prefers-color-scheme: dark) {
-    html {
-      color-scheme: dark;
-    }
+  button {
+    font-family: inherit;
   }
+}
+
+@layer utilities {
+  .active\:scale-98:active {
+    transform: scale(0.98);
+  }
+
+  .active\:scale-95:active {
+    transform: scale(0.95);
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Animation for flipping tiles */
+@keyframes flip {
+  0% {
+    transform: rotateX(0deg);
+  }
+  50% {
+    transform: rotateX(90deg);
+  }
+  100% {
+    transform: rotateX(0deg);
+  }
+}
+
+.animate-flip {
+  animation: flip 0.5s ease-in-out forwards;
+  transform-style: preserve-3d;
+}
+
+/* Shake animation for errors */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-5px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(5px); }
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+/* Pop animation for success */
+@keyframes pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.animate-pop {
+  animation: pop 0.2s ease-out;
 }

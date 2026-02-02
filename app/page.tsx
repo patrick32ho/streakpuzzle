@@ -1,127 +1,166 @@
-"use client";
-import { useState, useEffect } from "react";
-import sdk from "@farcaster/miniapp-sdk";
-import { useMiniApp } from "./providers/MiniAppProvider";
-import { useRouter } from "next/navigation";
-import { farcasterConfig } from "../farcaster.config";
-import styles from "./page.module.css";
+'use client';
 
-interface AuthResponse {
-  success: boolean;
-  user?: {
-    fid: number; // FID is the unique identifier for the user
-    issuedAt?: number;
-    expiresAt?: number;
-  };
-  message?: string; // Error messages come as 'message' not 'error'
-}
-
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useMiniApp } from './providers/MiniAppProvider';
+import { getDayId, formatDayId } from '@/lib/puzzle';
 
 export default function Home() {
-  const { context, isReady } = useMiniApp();
-  const [email, setEmail] = useState("");
-  const [error, setError] = useState("");
+  const { context } = useMiniApp();
   const router = useRouter();
- 
-  
-
-  // If you need to verify the user's identity, you can use the SDK's quickAuth.
-  // This will verify the user's signature and return the user's FID. You can update
-  // this to meet your needs. See the /app/api/auth/route.ts file for more details.
-  // Note: If you don't need to verify the user's identity, you can get their FID and other user data
-  // via `context.user.fid`.
-  const [authData, setAuthData] = useState<AuthResponse | null>(null);
-  const [isAuthLoading, setIsAuthLoading] = useState(true);
-  const [authError, setAuthError] = useState<Error | null>(null);
+  const [dayId, setDayId] = useState(0);
+  const [todayStatus, setTodayStatus] = useState<'unplayed' | 'solved' | 'failed'>('unplayed');
+  const [streak, setStreak] = useState(0);
 
   useEffect(() => {
-    const authenticate = async () => {
-      try {
-        const response = await sdk.quickAuth.fetch('/api/auth');
-        const data = await response.json();
-        setAuthData(data);
-      } catch (err) {
-        setAuthError(err as Error);
-      } finally {
-        setIsAuthLoading(false);
-      }
-    };
+    const currentDayId = getDayId();
+    setDayId(currentDayId);
 
-    if (isReady) {
-      authenticate();
-    }
-  }, [isReady]);
-
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    // Check authentication first
-    if (isAuthLoading) {
-      setError("Please wait while we verify your identity...");
-      return;
-    }
-
-    if (authError || !authData?.success) {
-      setError("Please authenticate to join the waitlist");
-      return;
-    }
-
-    if (!email) {
-      setError("Please enter your email address");
-      return;
-    }
-
-    if (!validateEmail(email)) {
-      setError("Please enter a valid email address");
-      return;
-    }
-
-    // TODO: Save email to database/API with user FID
-    console.log("Valid email submitted:", email);
-    console.log("User authenticated:", authData.user);
+    // Check localStorage for today's status
+    const storageKey = `grid_of_day_${currentDayId}`;
+    const stored = localStorage.getItem(storageKey);
     
-    // Navigate to success page
-    router.push("/success");
+    if (stored) {
+      try {
+        const data = JSON.parse(stored);
+        if (data.status === 'won') {
+          setTodayStatus('solved');
+        } else if (data.status === 'lost') {
+          setTodayStatus('failed');
+        }
+        if (data.result?.streak?.current) {
+          setStreak(data.result.streak.current);
+        }
+      } catch {
+        // Ignore parse errors
+      }
+    }
+  }, []);
+
+  const handlePlay = () => {
+    router.push('/play');
   };
 
   return (
-    <div className={styles.container}>
-      <button className={styles.closeButton} type="button">
-        ✕
-      </button>
-      
-      <div className={styles.content}>
-        <div className={styles.waitlistForm}>
-          <h1 className={styles.title}>Join {farcasterConfig.miniapp.name.toUpperCase()}</h1>
-          
-          <p className={styles.subtitle}>
-             Hey {context?.user?.displayName || "there"}, Get early access and be the first to experience the future of<br />
-            crypto marketing strategy.
-          </p>
+    <div className="min-h-screen flex flex-col">
+      {/* Header */}
+      <header className="p-4 text-center">
+        <h1 className="text-2xl font-bold text-white mb-1">
+          Grid of the Day
+        </h1>
+        <p className="text-gray-400 text-sm">
+          {formatDayId(dayId)}
+        </p>
+      </header>
 
-          <form onSubmit={handleSubmit} className={styles.form}>
-            <input
-              type="email"
-              placeholder="Your amazing email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className={styles.emailInput}
-            />
-            
-            {error && <p className={styles.error}>{error}</p>}
-            
-            <button type="submit" className={styles.joinButton}>
-              JOIN WAITLIST
-            </button>
-          </form>
+      {/* Main content */}
+      <main className="flex-1 flex flex-col items-center justify-center p-4">
+        {/* Logo/Preview */}
+        <div className="mb-8">
+          <div className="flex gap-2">
+            {['R', 'O', 'Y', 'G', 'B'].map((id, i) => (
+              <div
+                key={i}
+                className="w-12 h-12 rounded-lg animate-bounce-in"
+                style={{
+                  backgroundColor: ['#EF4444', '#F97316', '#EAB308', '#22C55E', '#3B82F6'][i],
+                  animationDelay: `${i * 100}ms`,
+                }}
+              />
+            ))}
+          </div>
         </div>
-      </div>
+
+        {/* Status */}
+        <div className="text-center mb-8">
+          {todayStatus === 'unplayed' && (
+            <>
+              <p className="text-xl text-gray-300 mb-2">
+                Hey {context?.user?.displayName || 'Player'}!
+              </p>
+              <p className="text-gray-400">
+                Ready to solve today&apos;s puzzle?
+              </p>
+            </>
+          )}
+          {todayStatus === 'solved' && (
+            <>
+              <p className="text-xl text-success mb-2">
+                ✓ Today&apos;s puzzle solved!
+              </p>
+              <p className="text-gray-400">
+                Come back tomorrow for a new challenge
+              </p>
+            </>
+          )}
+          {todayStatus === 'failed' && (
+            <>
+              <p className="text-xl text-error mb-2">
+                Today&apos;s puzzle completed
+              </p>
+              <p className="text-gray-400">
+                Try again tomorrow!
+              </p>
+            </>
+          )}
+        </div>
+
+        {/* Streak Card */}
+        {streak > 0 && (
+          <div className="bg-gray-800 rounded-xl p-4 mb-8 flex items-center gap-3">
+            <span className="text-3xl">🔥</span>
+            <div>
+              <p className="text-white font-bold text-lg">{streak} Day Streak</p>
+              <p className="text-gray-400 text-sm">Keep it going!</p>
+            </div>
+          </div>
+        )}
+
+        {/* Play Button */}
+        <button
+          onClick={handlePlay}
+          className="w-full max-w-xs py-4 bg-primary text-white rounded-xl font-bold text-lg
+            hover:bg-primary-dark active:scale-98 transition-all mb-4"
+        >
+          {todayStatus === 'unplayed' ? 'Play Today' : 'View Result'}
+        </button>
+
+        {/* How to Play */}
+        <Link
+          href="/how-to-play"
+          className="text-primary hover:underline text-sm"
+        >
+          How to play?
+        </Link>
+      </main>
+
+      {/* Navigation */}
+      <nav className="p-4 border-t border-gray-800">
+        <div className="flex justify-around max-w-md mx-auto">
+          <Link 
+            href="/"
+            className="flex flex-col items-center gap-1 text-primary"
+          >
+            <span className="text-xl">🏠</span>
+            <span className="text-xs">Home</span>
+          </Link>
+          <Link 
+            href="/leaderboard"
+            className="flex flex-col items-center gap-1 text-gray-400 hover:text-white"
+          >
+            <span className="text-xl">🏆</span>
+            <span className="text-xs">Leaderboard</span>
+          </Link>
+          <Link 
+            href="/profile"
+            className="flex flex-col items-center gap-1 text-gray-400 hover:text-white"
+          >
+            <span className="text-xl">👤</span>
+            <span className="text-xs">Profile</span>
+          </Link>
+        </div>
+      </nav>
     </div>
   );
 }

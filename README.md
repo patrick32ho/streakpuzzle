@@ -1,159 +1,294 @@
-# Waitlist Mini App Quickstart
+# Grid of the Day
 
-This is a demo Mini App application built using OnchainKit and the Farcaster SDK. Build a waitlist sign-up mini app for your company that can be published to the Base app and Farcaster. 
+A viral daily puzzle game for Base App - think Wordle meets Mastermind, but with colors!
 
-> [!IMPORTANT]  
-> Before interacting with this demo, please review our [disclaimer](#disclaimer) — there are **no official tokens or apps** associated with Cubey, Base, or Coinbase.
+Guess the secret 5-token sequence in 6 attempts. Build streaks, climb leaderboards, and earn onchain badges.
 
-## Prerequisites
+## Features
 
-Before getting started, make sure you have:
+- **Daily Puzzle**: New puzzle every day at midnight UTC
+- **Language-agnostic**: Uses colors/shapes instead of letters
+- **Streak System**: Build consecutive day streaks
+- **Leaderboards**: Daily and weekly rankings
+- **Viral Sharing**: Share your results as emoji grids
+- **Hard Mode**: For the extra challenge
+- **Onchain Rewards** (optional):
+  - Daily completion badges (soulbound)
+  - 7/14/30-day streak badges
+  - Cosmetic frames
 
-* Base app account
-* A [Farcaster](https://farcaster.xyz/) account
-* [Vercel](https://vercel.com/) account for hosting the application
-* [Coinbase Developer Platform](https://portal.cdp.coinbase.com/) Client API Key
+## Tech Stack
 
-## Getting Started
+- **Frontend**: Next.js 15 (App Router), React 19, TypeScript
+- **Styling**: Tailwind CSS
+- **Platform**: Base App Mini App (Farcaster SDK)
+- **Blockchain**: Base (Sepolia for testnet)
+- **Contracts**: Solidity, Hardhat, OpenZeppelin
 
-### 1. Clone this repository 
+## Quick Start
+
+### 1. Install Dependencies
 
 ```bash
-git clone https://github.com/base/demos.git
-```
-
-### 2. Install dependencies:
-
-```bash
-cd demos/minikit/waitlist-mini-app-qs
 npm install
 ```
 
-### 3. Configure environment variables
-
-Create a `.env.local` file and add your environment variables:
+### 2. Setup Environment
 
 ```bash
-NEXT_PUBLIC_PROJECT_NAME="Your App Name"
-NEXT_PUBLIC_ONCHAINKIT_API_KEY=<Replace-WITH-YOUR-CDP-API-KEY>
-NEXT_PUBLIC_URL=
+cp .env.example .env.local
 ```
 
-### 4. Run locally:
+Edit `.env.local` and set your secrets:
+
+```bash
+# Generate secure random secrets
+node -e "console.log('DAILY_SECRET=' + require('crypto').randomBytes(32).toString('hex'))"
+node -e "console.log('COMMITMENT_SALT=' + require('crypto').randomBytes(32).toString('hex'))"
+```
+
+### 3. Run Development Server
 
 ```bash
 npm run dev
 ```
 
-## Customization
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### Update Manifest Configuration
+### 4. Test in Base App
 
-The `minikit.config.ts` file configures your manifest located at `app/.well-known/farcaster.json`.
+1. Deploy to Vercel or another hosting provider
+2. Configure the manifest at `/.well-known/farcaster.json`
+3. Use [base.dev/preview](https://base.dev/preview) to test
+4. Post your app URL to Base App to publish
 
-**Skip the `accountAssociation` object for now.**
+## Project Structure
 
-To personalize your app, change the `name`, `subtitle`, and `description` fields and add images to your `/public` folder. Then update their URLs in the file.
-
-## Deployment
-
-### 1. Deploy to Vercel
-
-```bash
-vercel --prod
+```
+grid-of-the-day/
+├── app/                    # Next.js App Router
+│   ├── api/               # API routes
+│   │   ├── daily/         # GET daily puzzle metadata
+│   │   ├── guess/         # POST validate a guess
+│   │   ├── submit/        # POST submit final result
+│   │   ├── leaderboard/   # GET leaderboard data
+│   │   └── og/            # OG image generation
+│   ├── components/        # React components
+│   │   └── game/          # Game-specific components
+│   ├── providers/         # Context providers
+│   ├── play/              # Game page
+│   ├── leaderboard/       # Leaderboard page
+│   ├── profile/           # Profile page
+│   └── how-to-play/       # Instructions
+├── lib/                   # Shared utilities
+│   ├── puzzle/            # Puzzle logic & algorithms
+│   ├── db/                # Database utilities
+│   ├── hooks/             # React hooks
+│   └── contracts/         # Contract ABIs & addresses
+├── contracts/             # Solidity smart contracts
+├── scripts/               # Deploy & utility scripts
+└── public/                # Static assets
 ```
 
-You should have a URL deployed to a domain similar to: `https://your-vercel-project-name.vercel.app/`
+## Environment Variables
 
-### 2. Update environment variables
+### Required
 
-Add your production URL to your local `.env` file:
+| Variable | Description |
+|----------|-------------|
+| `NEXT_PUBLIC_URL` | Your app's public URL |
+| `DAILY_SECRET` | Secret for puzzle generation (32 bytes hex) |
+| `COMMITMENT_SALT` | Salt for puzzle commitment (32 bytes hex) |
+
+### Optional (for onchain features)
+
+| Variable | Description |
+|----------|-------------|
+| `SERVER_SIGNER_PRIVATE_KEY` | Private key for signing claims |
+| `DEPLOYER_PRIVATE_KEY` | Private key for contract deployment |
+| `NEXT_PUBLIC_CHAIN_ID` | `84532` (Sepolia) or `8453` (Mainnet) |
+| `NEXT_PUBLIC_CONTRACT_BADGES` | GridBadges contract address |
+| `NEXT_PUBLIC_CONTRACT_FRAMES` | GridFrames contract address |
+| `BASESCAN_API_KEY` | For contract verification |
+
+## Deploying Contracts
+
+### 1. Compile Contracts
 
 ```bash
-NEXT_PUBLIC_PROJECT_NAME="Your App Name"
-NEXT_PUBLIC_ONCHAINKIT_API_KEY=<Replace-WITH-YOUR-CDP-API-KEY>
-NEXT_PUBLIC_URL=https://your-vercel-project-name.vercel.app/
+npx hardhat compile
 ```
 
-### 3. Upload environment variables to Vercel
-
-Add environment variables to your production environment:
+### 2. Deploy to Base Sepolia
 
 ```bash
-vercel env add NEXT_PUBLIC_PROJECT_NAME production
-vercel env add NEXT_PUBLIC_ONCHAINKIT_API_KEY production
-vercel env add NEXT_PUBLIC_URL production
+npx hardhat run scripts/deploy.ts --network baseSepolia
 ```
 
-## Account Association
+### 3. Update Environment
 
-### 1. Sign Your Manifest
+After deployment, set the contract addresses in your environment:
 
-1. Navigate to [Farcaster Manifest tool](https://farcaster.xyz/~/developers/mini-apps/manifest)
-2. Paste your domain in the form field (ex: your-vercel-project-name.vercel.app)
-3. Click the `Generate account association` button and follow the on-screen instructions for signing with your Farcaster wallet
-4. Copy the `accountAssociation` object
+```bash
+NEXT_PUBLIC_CONTRACT_BADGES=0x...
+NEXT_PUBLIC_CONTRACT_FRAMES=0x...
+```
 
-### 2. Update Configuration
+## Security
 
-Update your `minikit.config.ts` file to include the `accountAssociation` object:
+### Secrets Safety
 
-```ts
-export const minikitConfig = {
-    accountAssociation: {
-        "header": "your-header-here",
-        "payload": "your-payload-here",
-        "signature": "your-signature-here"
-    },
-    frame: {
-        // ... rest of your frame configuration
-    },
+**NEVER commit secrets to git!** This repo is designed to be safe for public GitHub:
+
+1. All secrets are in `.env.example` with placeholder values
+2. `.gitignore` excludes all `.env*` files
+3. Pre-commit hook runs `npm run secrets:check`
+4. Daily solutions are generated server-side using HMAC
+
+### Secret Types
+
+| Secret | Purpose | Storage |
+|--------|---------|---------|
+| `DAILY_SECRET` | Generates unpredictable solutions | Vercel/hosting env |
+| `COMMITMENT_SALT` | Puzzle verification | Vercel/hosting env |
+| `SERVER_SIGNER_PRIVATE_KEY` | Signs onchain claims | Vercel/hosting env |
+| `DEPLOYER_PRIVATE_KEY` | Contract deployment only | Local only |
+
+### If Secrets Are Leaked
+
+1. Immediately rotate the leaked secret
+2. Redeploy contracts if `SERVER_SIGNER_PRIVATE_KEY` was exposed
+3. Update all environments with new values
+
+## Publishing to GitHub
+
+```bash
+# Initialize git (if not already)
+git init
+
+# Add files (secrets check runs automatically)
+git add .
+
+# Commit
+git commit -m "Initial commit: Grid of the Day"
+
+# Create GitHub repo and push
+gh repo create grid-of-the-day --public
+git push -u origin main
+```
+
+**Important**: NEVER add `.env` files to git!
+
+## Publishing to Base App
+
+1. Deploy to production (Vercel recommended)
+2. Set all environment variables in Vercel dashboard
+3. Get your `accountAssociation` credentials:
+   - Go to [base.dev/preview?tab=account](https://base.dev/preview?tab=account)
+   - Enter your app URL
+   - Sign with your wallet
+   - Copy the credentials to `farcaster.config.ts`
+4. Redeploy after updating the config
+5. Test with [base.dev/preview](https://base.dev/preview)
+6. Post your app URL to Base App to publish!
+
+## Game Rules
+
+### How to Play
+
+1. Each day there's a new secret 5-token sequence
+2. You have 6 attempts to guess it
+3. After each guess, you get feedback:
+   - 🟩 **Green**: Token is correct and in the right position
+   - 🟨 **Yellow**: Token is in the solution but wrong position
+   - ⬛ **Gray**: Token is not in the solution
+
+### Token Set
+
+The game uses 8 tokens:
+🔴 🟠 🟡 🟢 🔵 🟣 ⚫ ⚪
+
+### Hard Mode
+
+In Hard Mode, you must use revealed hints:
+- Green tokens must stay in their position
+- Yellow tokens must be included in your guess
+
+### Duplicates
+
+Tokens can appear multiple times. Feedback handles duplicates correctly (Wordle-style).
+
+## API Reference
+
+### GET /api/daily
+
+Returns today's puzzle metadata (without solution).
+
+```json
+{
+  "dayId": 123,
+  "tokenSetVersion": 1,
+  "puzzleCommitment": "abc123...",
+  "issuedAt": 1704067200000,
+  "signature": "def456..."
 }
 ```
 
-### 3. Deploy Updates
+### POST /api/guess
 
-```bash
-vercel --prod
+Validate a single guess and get feedback.
+
+```json
+// Request
+{ "dayId": 123, "guess": "R,G,B,Y,P" }
+
+// Response
+{ "valid": true, "feedback": ["correct", "wrongPos", "absent", "absent", "correct"], "solved": false }
 ```
 
-## Testing and Publishing
+### POST /api/submit
 
-### 1. Preview Your App
+Submit final game result.
 
-Go to [base.dev/preview](https://base.dev/preview) to validate your app:
+```json
+// Request
+{
+  "anonId": "uuid",
+  "dayId": 123,
+  "mode": "normal",
+  "attemptsUsed": 4,
+  "solved": true,
+  "timeMs": 45000,
+  "guessHistory": ["R,G,B,Y,P", "R,G,B,Y,P", ...],
+  "dailySignature": "..."
+}
 
-1. Add your app URL to view the embeds and click the launch button to verify the app launches as expected
-2. Use the "Account association" tab to verify the association credentials were created correctly
-3. Use the "Metadata" tab to see the metadata added from the manifest and identify any missing fields
+// Response
+{
+  "accepted": true,
+  "solved": true,
+  "attemptsUsed": 4,
+  "rank": 42,
+  "percentile": 85,
+  "streak": { "current": 7, "best": 14 },
+  "claimable": { "dailyBadge": true, "weeklyStreakBadge": 7 },
+  "share": { "emojiGridText": "...", "shareLink": "..." }
+}
+```
 
-### 2. Publish to Base App
+### GET /api/leaderboard
 
-To publish your app, create a post in the Base app with your app's URL.
+Get leaderboard entries.
 
-## Learn More
+```
+GET /api/leaderboard?scope=daily&dayId=123
+GET /api/leaderboard?scope=weekly&dayId=123
+```
 
-For detailed step-by-step instructions, see the [Create a Mini App tutorial](https://docs.base.org/docs/mini-apps/quickstart/create-new-miniapp/) in the Base documentation.
+## License
 
+MIT
 
----
+## Credits
 
-## Disclaimer  
-
-This project is a **demo application** created by the **Base / Coinbase Developer Relations team** for **educational and demonstration purposes only**.  
-
-**There is no token, cryptocurrency, or investment product associated with Cubey, Base, or Coinbase.**  
-
-Any social media pages, tokens, or applications claiming to be affiliated with, endorsed by, or officially connected to Cubey, Base, or Coinbase are **unauthorized and fraudulent**.  
-
-We do **not** endorse or support any third-party tokens, apps, or projects using the Cubey name or branding.  
-
-> [!WARNING]
-> Do **not** purchase, trade, or interact with any tokens or applications claiming affiliation with Coinbase, Base, or Cubey.  
-> Coinbase and Base will never issue a token or ask you to connect your wallet for this demo.  
-
-For official Base developer resources, please visit:  
-- [https://base.org](https://base.org)  
-- [https://docs.base.org](https://docs.base.org)  
-
----
+Built for Base App hackathon. Inspired by Wordle and Mastermind.

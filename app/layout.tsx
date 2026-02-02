@@ -9,14 +9,25 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: farcasterConfig.miniapp.name,
     description: farcasterConfig.miniapp.description,
+    openGraph: {
+      title: farcasterConfig.miniapp.ogTitle,
+      description: farcasterConfig.miniapp.ogDescription,
+      images: [farcasterConfig.miniapp.ogImageUrl],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: farcasterConfig.miniapp.ogTitle,
+      description: farcasterConfig.miniapp.ogDescription,
+      images: [farcasterConfig.miniapp.ogImageUrl],
+    },
     other: {
       "fc:frame": JSON.stringify({
         version: farcasterConfig.miniapp.version,
         imageUrl: farcasterConfig.miniapp.heroImageUrl,
         button: {
-          title: `Join the ${farcasterConfig.miniapp.name} Waitlist`,
+          title: "Play Grid of the Day",
           action: {
-            name: `Launch ${farcasterConfig.miniapp.name}`,
+            name: "Launch Grid of the Day",
             type: "launch_frame",
           },
         },
@@ -43,7 +54,13 @@ export default function RootLayout({
   return (
     <Providers>
       <html lang="en">
-        <body className={`${inter.variable} ${sourceCodePro.variable}`}>
+        <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+          <meta name="theme-color" content="#0a0a0a" />
+          <meta name="apple-mobile-web-app-capable" content="yes" />
+          <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        </head>
+        <body className={`${inter.variable} ${sourceCodePro.variable} antialiased`}>
           <SafeArea>{children}</SafeArea>
         </body>
       </html>
